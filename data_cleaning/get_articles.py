@@ -10,8 +10,8 @@ noncred.columns = ['site', 'lang', 'type','notes', 'tmp']
 cred['clean_site'] = cred['site'].apply(lambda x: x.split('.')[0].lower())
 noncred['clean_site'] = noncred['site'].apply(lambda x: x.split('.')[0].lower())
 
-true = list(cred['clean_site'])
-false = list(noncred['clean_site'])
+cred_sources = list(cred['clean_site'])
+noncred_sources = list(noncred['clean_site'])
 data = []
 with open('signalmedia-1m.jsonl') as f:
     for line in f:
