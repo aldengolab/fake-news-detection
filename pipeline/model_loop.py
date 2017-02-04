@@ -31,6 +31,8 @@ import time
 import acg_process
 import random
 
+PARAMS_ITER_MAX = 50
+
 def define_project_params(label, models):
     '''
     Parameters specific to the project being run.
@@ -78,80 +80,64 @@ def define_clfs_params():
         }
     return clfs, params
 
-def clf_loop(dataframe, clfs, models_to_run, params, y_variable, X_variables,
- imp_cols = [], addl_runs = 9, evalution = ['AUC', 'precision', 'recall'], stat_k = .10, plot = False,
- robustscale_cols = [], scale_columns = [], params_iter_max = 50, randomize_features = None):
+def clf_loop(train, test, clfs, models_to_run, params, y_variable, X_variables,
+ imp_cols = [], stat_k = .10, plot = False,
+ robustscale_cols = [], scale_columns = []):
     '''
     Runs through each model specified by models_to_run once with each possible
     setting in params. For boosting don't include randomize_features.
     '''
     N = 0
-    maximum = ('name', 0, 0)
-    for n in range(1 + addl_runs):
-        for col in robustscale_cols:
-            if col in rand_X:
-                X_train, scaler = acg_process.robust_transform(X_train, col, keep = True)
-                X_test = acg_process.robust_transform(X_test, col, scaler = scaler)
-        for col in scale_columns:
-            if col in rand_X:
-                X_train, maxval, minval = acg_process.normalize_scale(X_train, col = col, keep = True)
-                X_test = acg_process.normalize_scale(X_test, col = col, maxval = maxval, minval = minval)
-        print('Finished transfroming. The final training set has the shape',X_train.shape)
-        for index, clf in enumerate([clfs[x] for x in models_to_run]):
-            print(models_to_run[index])
-            sys.stderr.write('Running {}.'.format(models_to_run[index]))
-            # Iterate through all possible parameter combinations
-            parameter_values = params[models_to_run[index]]
-            grid = ParameterGrid(parameter_values)
-            iteration = 0
-            for p in grid:
-                # If cut-off of parameter iterations expected, choose random
-                if len(grid) > params_iter_max:
-                    p = random.choice(list(grid))
-                # Run until hitting max number of parameter iterations
-                if iteration < params_iter_max:
-                    try:
-                        clf.set_params(**p)
-                        print(clf)
-                        y_pred_probs = clf.fit(X_train,
-                        y_train).predict_proba(
-                            X_test)[:,1]
-                        if 'precision' in evalution:
-                            result = precision_at_k(y_test, y_pred_probs,
-                            stat_k)
-                            print('Precision: ', result)
-                            if result[0] > maximum[1]:
-                                maximum = (clf, result[0], result[1])
-                                print('Max Precision: {}'.format(maximum))
-                                plot_precision_recall_n(y_test,
-                                y_pred_probs, clf, N)
-                                N += 1
-                                if models_to_run[index] == 'RF':
-                                    importances = clf.feature_importances_
-                                    sortedidx = np.argsort(importances)
-                                    best_features = X_train.columns[sortedidx]
-                                    print(best_features[::-1])
-                                if models_to_run[index] == 'DT':
-                                    export_graphviz(clf, 'DT_graph_' + str(N) + '.dot')
-                        if 'AUC' in evalution:
-                            result = auc_roc(y_test, y_pred_probs)
-                            print('AUC: {}'.format(result))
-                        if plot and result[0] <= maximum[1]:
-                            plot_precision_recall_n(y_test, y_pred_probs, clf, N)
-                            N += 1
-                        if 'recall' in evalution:
-                            print('Recall: ', recall_at_k(y_test, y_pred_probs, stat_k))
-                        print('Accuracy: ', accuracy_at_k(y_test, y_pred_probs, stat_k))
-                        iteration += 1
-                    except IndexError as e:
-                        print('Error: {0}'.format(e))
-                        continue
-                    except RuntimeError as e:
-                        print('RuntimeError: {}'.format(e))
-                        continue
-                    except AttributeError as e:
-                        print('AttributeError: {}'.format(e))
-                        continue
+    for index, clf in enumerate([clfs[x] for x in models_to_run]):
+        print('Running {}.'.format(models_to_run[index]))
+        parameter_values = params[models_to_run[index]]
+        grid = ParameterGrid(parameter_values)
+        iteration = 0
+        while iteration < PARAMS_ITER_MAX:
+            p = random.choice(list(grid))
+            try:
+                run_model(p)
+                iteration += 1
+            except IndexError as e:
+                print('Error: {0}'.format(e))
+                continue
+            except RuntimeError as e:
+                print('RuntimeError: {}'.format(e))
+                continue
+            except AttributeError as e:
+                print('AttributeError: {}'.format(e))
+                continue
+
+def run_model(p):
+    '''
+    Runs a model with params p.
+    '''
+    clf.set_params(**p)
+    print(clf)
+    y_pred_probs = clf.fit(X_train,y_train).predict_proba(X_test)[:,1]
+    result = precision_at_k(y_test, y_pred_probs,
+    stat_k)
+    print('Precision: ', result)
+    if result[0] > maximum[1]:
+        maximum = (clf, result[0], result[1])
+        print('Max Precision: {}'.format(maximum))
+        plot_precision_recall_n(y_test,
+        y_pred_probs, clf, N)
+        N += 1
+        if models_to_run[index] == 'RF':
+            importances = clf.feature_importances_
+            sortedidx = np.argsort(importances)
+            best_features = X_train.columns[sortedidx]
+            print(best_features[::-1])
+        if models_to_run[index] == 'DT':
+            export_graphviz(clf, 'DT_graph_' + str(N) + '.dot')
+
+    result = auc_roc(y_test, y_pred_probs)
+    print('AUC: {}'.format(result))
+    plot_precision_recall_n(y_test, y_pred_probs, clf, N)
+    N += 1
+    print('Recall: ', recall_at_k(y_test, y_pred_probs, stat_k))
+    print('Accuracy: ', accuracy_at_k(y_test, y_pred_probs, stat_k))
 
 
 def plot_precision_recall_n(y_true, y_prob, model_name, N):
@@ -188,7 +174,6 @@ def plot_precision_recall_n(y_true, y_prob, model_name, N):
     print('File saved as {} for model above'.format(name))
     plt.title(name)
     plt.savefig(name)
-    #plt.show()
     plt.close()
 
 def accuracy(y_true, y_scores, threshold):
@@ -236,6 +221,7 @@ def run_data_checks(dataframe, y_variable, X_variables):
     # Find any columns with missing values
     missing_cols = []
     for column in X_variables:
+        assert max(dataframe[column] <= 1)
         if len(dataframe[dataframe[column].isnull()]) > 0:
             missing_cols.append(column)
     if len(missing_cols) > 0:
@@ -245,7 +231,7 @@ def run_data_checks(dataframe, y_variable, X_variables):
 
 def main(trainfp, testfp, label, models, iterations):
     '''
-    Runs the loop.
+    Loads data from csvs, executes basic data checks, runs loop.
     '''
     train = pd.read_csv(trainfp)
     test = pd.read_csv(testfp)
@@ -255,7 +241,7 @@ def main(trainfp, testfp, label, models, iterations):
     clfs, params = define_clfs_params(label, models)
     y_variable, imp_cols, models_to_run, robustscale_cols, scale_columns = define_project_params()
     X_variables = [col for col in train.columns if col != y_variable]
-    
+
     # Run Data checks
     print("Checking training data...")
     run_data_checks(train, y_variable, X_variables)
@@ -274,5 +260,6 @@ if __name__ == '__main__':
     parser.add_argument('--models', nargs='*',
                          help='List of models to run: RF, AB, ET, LR, SVM, GB, NB, DT, SGD, KNN included')
     parser.add_argument('-n', nargs=1, help='Number of iterations to run')
+    parser.add_argument('-o', nargs=1, help='Output CSV' default='output.csv')
     args = parser.parse_args()
     main(args.train[0], args.test[0], args.label[0], args.models, args.n[0])
