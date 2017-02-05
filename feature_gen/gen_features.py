@@ -80,7 +80,7 @@ class FeatureGenerator():
             print("Creating feature: ",f)
             parameter_values = self.params[f]
             for p in ParameterGrid(parameter_values):
-                print("Paramaters: ",p)
+                print("Parameters: ",p)
                 feat_generator = getattr(self, f)
                 x_features, transformer = feat_generator(p)
                 self.pipeline[f] = transformer
@@ -100,7 +100,7 @@ class FeatureGenerator():
     def CountVectorize(self, kwargs=None, step='fit'):
         '''
         Creates a sparse matrix of normalized counts of words from document.
-        kwargs are generated from the paramaters dictionary
+        kwargs are generated from the parameters dictionary
         '''
         if step == 'fit':
             v = CountVectorizer(tokenizer=nltk.word_tokenize,
@@ -118,7 +118,7 @@ class FeatureGenerator():
     def TfidfVectorize(self, kwargs=None, step='fit'):
         '''
         Creates a sparse matrix of normalized TFIDF counts of words from document.
-        kwargs are generated from the paramaters dictionary
+        kwargs are generated from the parameters dictionary
         '''
         if step == 'fit':
             v = TfidfVectorizer(tokenizer=nltk.word_tokenize,
@@ -134,7 +134,7 @@ class FeatureGenerator():
     def CountPOS(self, kwargs=None, step='fit'):
         '''
         Creates a sparse matrix of part of speech frequencies for each document.
-        kwargs are generated from the paramaters dictionary
+        kwargs are generated from the parameters dictionary
         '''
         def count_pos(s):
             tagged = pos_tag(word_tokenize(s))
