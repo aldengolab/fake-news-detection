@@ -3,12 +3,12 @@ Final Project for CAPP 30255 Advanced Machine Learning for Public Policy
 Lauren Dyson & Alden Golab, Winter 2017
 
 # Dependencies
-python 3.x
-nltk
-numpy
-sklearn
-scipy
-pandas
+-python 3.x
+-nltk
+-numpy
+-sklearn
+-scipy
+-pandas
 
 # Data
 
