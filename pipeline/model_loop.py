@@ -1,8 +1,7 @@
 ## This code loops through ML models for classification.
 
-## Basic borrowed from RAYID GHANI, with extensive edits ##
-## https://github.com/rayidghani/magicloops/blob/master/magicloops.py ##
-## Accessed: 5/5/2016 ##
+## Basic code borrowed from RAYID GHANI, with extensive edits.
+## https://github.com/rayidghani/magicloops/blob/master/magicloops.py
 
 from __future__ import division
 import pandas as pd
@@ -85,6 +84,7 @@ def clf_loop(X_train, X_test, y_train, y_test, clfs, models_to_run, params, y_va
             try:
                 run_model(clf, X_train, y_train, X_test, y_test, p, N, plot,
                           output_file, models_to_run[index], iteration)
+                N += 1
                 iteration += 1
             except IndexError as e:
                 print(p)
@@ -130,10 +130,9 @@ def run_model(clf, X_train, y_train, X_test, y_test, p, N, plot, output_file, mo
                 N, model_type, iteration, auc_result, stat_k, precision, recall, acc)
             f.write(result)
     with open(output_file[:-4] + '_parameters.txt', 'a') as f:
-        f.write('{}'.format(p))
+        f.write('{}, {}'.format(N,', '.join(**p)))
         if model_type is 'RF':
             f.write('{}'.format(best_features[::-1]))
-    N += 1
 
 def plot_precision_recall_n(y_true, y_prob, model_name, N):
     '''
@@ -244,7 +243,8 @@ if __name__ == '__main__':
     '''
     To run, this system requires a training set, a test set (both csvs), a label
     (all other columns will be assumed X variables), a list of models to run,
-    the number of parameter iterations (max) to run for each model,
+    the number of parameter iterations (max) to run for each model, and the
+    name of a csv to output model specifications to.
     '''
     parser = argparse.ArgumentParser(description='A model loop for ML pipelines.')
     parser.add_argument('--train', nargs=1, help='Filepath for csv containing training data')
