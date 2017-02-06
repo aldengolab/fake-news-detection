@@ -12,13 +12,15 @@ Lauren Dyson & Alden Golab, Winter 2017
 
 # Data
 
-This project is using a [dataset published by Signal Media](http://research.signalmedia.co/newsir16/signal-dataset.html) in conjunction with the Recent Trends in News Information Retrieval 2016 conference to facilitate conducting research on news articles.
+This project is using a [dataset published by Signal Media](http://research.signalmedia.co/newsir16/signal-dataset.html) in conjunction with the Recent Trends in News Information Retrieval 2016 conference to facilitate conducting research on news articles. We use [OpenSources.co](http://opensources.co) to distinguish between 'legitimate' and 'fake' news sources. 
 
 # Feature Generation
+
 In the feature_gen folder, specify which features you want to generate in the feature_config.yaml file.
 Then, run generate_features.py.
 
 # Pipeline
+
 The pipeline contains two sets of python code:
 
 - `data_prep.py`: this code takes a set of labeled cases with features and builds out test & train models. It can be used to run cross-validation on a selected model or to run the model loop.
