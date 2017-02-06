@@ -227,7 +227,7 @@ def testing_loop():
     models_to_run=['RF','LR']
     iterations = 2
     output_file = 'output.csv'
-    y_variable = np.arange(y_test.shape[1])
+    y_variable = np.arange(y_test.shape[0])
     print('yvar',y_variable)
     X_variables = np.arange(X_test.shape[1])
     print('xvar',y_variable)
