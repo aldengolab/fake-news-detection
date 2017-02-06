@@ -16,14 +16,17 @@ data = []
 with open('signalmedia-1m.jsonl') as f:
     for line in f:
         l = json.loads(line)
-        #?print(l)
-        s = l['source'].replace(' ','').lower()
+        
+        if l['media-type']=='News':
+                s = l['source']
+                if s not in sources:
+                    print(s)
+                    sources.add(l['source'])
+        s = l['source'].replace(' ','').replace("'","").replace('-','').lower()
         if s in true and s not in false:
-           print("True ",s)
            l['label']=0
            data.append(l)
         elif s in false and s not in true:
-            print("False ",s)
             l['label']=1
             data.append(l)
         else:
@@ -33,10 +36,10 @@ with open('signalmedia-1m.jsonl') as f:
 df = pd.DataFrame(data)
 df.to_csv('articles1.csv')
 
-#with open('sources.csv','w',newline='') as f:
-#    cw = csv.writer(f)
-#    sources = list(sources)
-#    for s in sources:
-#        print(s)
-#        cw.writerow([s])
+with open('sources.csv','w',newline='') as f:
+    cw = csv.writer(f)
+    sources = list(sources)
+    for s in sources:
+        print(s)
+        cw.writerow([s])
 
