@@ -19,6 +19,9 @@ from sklearn.grid_search import RandomizedSearchCV
 from sklearn.metrics import *
 import random
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+import yaml
+from feature_gen import gen_features
 
 PARAMS_ITER_MAX = 50
 THRESHOLDS = [0.5, 0.75, 0.8, 0.9, 0.95]
@@ -33,20 +36,20 @@ def define_clfs_params():
     # These are the classifiers
     clfs = {
         'RF': RandomForestClassifier(n_estimators = 50, n_jobs = -1),
-        'ET': ExtraTreesClassifier(n_estimators = 10, n_jobs = -1, criterion = 'entropy'),
-        'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth = [1, 5, 10, 15]), algorithm = "SAMME", n_estimators = 200),
+#        'ET': ExtraTreesClassifier(n_estimators = 10, n_jobs = -1, criterion = 'entropy'),
+ #       'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth = [1, 5, 10, 15]), algorithm = "SAMME", n_estimators = 200),
         'LR': LogisticRegression(penalty = 'l1', C = 1e5),
-        'SVM': svm.SVC(kernel = 'linear', probability = True, random_state = 0),
-        'GB': GradientBoostingClassifier(learning_rate = 0.05, subsample = 0.5, max_depth = 6, n_estimators = 10),
+#        'SVM': svm.SVC(kernel = 'linear', probability = True, random_state = 0),
+#        'GB': GradientBoostingClassifier(learning_rate = 0.05, subsample = 0.5, max_depth = 6, n_estimators = 10),
         'NB_Gau': GaussianNB(),
-        'NB_Ber': BernoulliNB(),
+#        'NB_Ber': BernoulliNB(),
         'DT': DecisionTreeClassifier(),
-        'SGD': SGDClassifier(loss = 'log', penalty = 'l2'),
-        'KNN': KNeighborsClassifier(n_neighbors = 3)
+#        'SGD': SGDClassifier(loss = 'log', penalty = 'l2'),
+#        'KNN': KNeighborsClassifier(n_neighbors = 3)
         }
     # These are the parameters which will be run through
     params = {
-        'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [10, 15,20,30,40,50,60,70,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
+        'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [10], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
         'LR': {'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'random_state': [1]},
         'SGD': {'loss': ['log','perceptron'], 'penalty': ['l2','l1','elasticnet'], 'random_state': [1]},
         'ET': {'n_estimators': [1,10,100,1000], 'criterion' : ['gini', 'entropy'], 'max_depth': [1,3,5,10,15], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
@@ -54,7 +57,7 @@ def define_clfs_params():
         'GB': {'n_estimators': [1,10,100,1000], 'learning_rate' : [0.001,0.01,0.05,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100], 'random_state': [1]},
         'NB_Gau': {},
         'NB_Ber': {'class_prior': [None, CLASS_PRIORS]},
-        'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [15,20,30,40,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
+        'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [15,20], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
         'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear'], 'random_state': [1]},
         'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']}
         }
@@ -213,6 +216,25 @@ def run_data_checks(dataframe, y_variable, X_variables):
     if len(dataframe[y_variable].notnull()) < dataframe[y_variable]:
         raise NameError('Missing or infinite labels detected.')
 
+def testing_loop():
+    with open("feature_gen/feature_config.yaml", 'r') as ymlfile:
+        cfg = yaml.load(ymlfile)
+    args = {k: v for k, v in cfg.items() if k != 'test_datafile'}
+    f = gen_features.FeatureGenerator(**args)
+    X_train, X_test, y_train, y_test = train_test_split(f.X, f.y, test_size=0.33, random_state=42)
+    # Get all the necessary parameters
+    clfs, params = define_clfs_params()
+    models_to_run=['RF','LR']
+    iterations = 2
+    output_file = 'output.csv'
+    y_variable = np.arange(y_test.shape[1])
+    print('yvar',y_variable)
+    X_variables = np.arange(X_test.shape[1])
+    print('xvar',y_variable)
+   # Run the loop
+    clf_loop(X_train, X_test, y_train, y_test, clfs, models_to_run, params,
+             y_variable, X_variables, iterations, output_file)
+   
 def main(trainfp, testfp, y_variable, models_to_run, iterations, output_file):
     '''
     Loads data from csvs, executes basic data checks, runs loop.
@@ -234,8 +256,14 @@ def main(trainfp, testfp, y_variable, models_to_run, iterations, output_file):
     run_data_checks(train, y_variable, X_variables)
     print("Checking testing data...")
     run_data_checks(train, y_variable, X_variables)
-
-    # Run the loop
+    models_to_run=['RF','LR']
+    iterations = 2
+    output_file = 'output.csv'
+    y_variable = np.arange(y_test.shape[1])
+    print('yvar',y_variable)
+    X_variables = np.arange(X_test.shape[1])
+    print('xvar',y_variable)
+   # Run the loop
     clf_loop(X_train, X_test, y_train, y_test, clfs, models_to_run, params,
              y_variable, X_variables, iterations, output_file)
 
