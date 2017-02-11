@@ -1,7 +1,7 @@
 # Config settings for feature generation pipeline
 
-datafile: '../data_cleaning/articles1.csv' # path to main data file
-test_datafile: '../data_cleaning/small_test.csv' # optional
+datafile: '../../data_cleaning/articles1.csv' # path to main data file
+test_datafile: '../../data_cleaning/small_test.csv' # optional
 text_label: 'content' # label for raw text field
 y_label: 'label' # label for dependent variable
 fts_to_try: ['TfidfVectorize' # list of features to generate
