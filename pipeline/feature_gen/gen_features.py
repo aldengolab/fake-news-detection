@@ -164,4 +164,6 @@ if __name__ == "__main__":
         cfg = yaml.load(ymlfile)
     args = {k: v for k, v in cfg.items() if k != 'test_datafile'}
     f = FeatureGenerator(**args)
+    print(f.y.shape)
+    print(np.arange(1))
     f.transform(cfg['test_datafile'])
