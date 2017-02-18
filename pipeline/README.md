@@ -2,7 +2,6 @@
 
 ## Sample Run
 
-`from test_train import TimeTestTrainSplit`  
 `from model_loop import ModelLoop`
 
 `label = 'LABEL'`  
