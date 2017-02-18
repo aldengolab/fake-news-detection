@@ -22,7 +22,7 @@ from model import Model
 
 class ModelLoop():
 
-    def __init__(self, train, test, label, models, iterations, output_dir,
+    def __init__(self, X_train, X_test, y_train, y_test, models, iterations, output_dir,
                  thresholds = [], ks = [], ignore_columns=[], method='pandas',
                  report='simple', pickle=False):
         '''
@@ -31,16 +31,16 @@ class ModelLoop():
         Inputs:
          - train: training data as a pandas dataframe
          - test: testing data as a pandas dataframe
-         - label: class column, as string
          - models: models to run as list
          - iterations: maximum number of parameter iterations as int
          - output_dir: directory output model performance
          - report: type of reporting, options are simple and full
          - pickle: whether to pickle models
         '''
-        self.train = train
-        self.test = test
-        self.label = label
+        self.X_train = X_train
+        self.X_test = X_test
+        self.y_train = y_train
+        self.y_test = y_test
         self.models_to_run = models
         self.iterations_max = iterations
         self.output_dir = output_dir
@@ -175,31 +175,15 @@ class ModelLoop():
                     missing_cols.append(column)
             if len(missing_cols) > 0:
                 raise NameError('Missing or infinite X values detected: {}'.format(missing_cols))
-            if len(dataframe[self.label].notnull()) < len(dataframe[self.label]):
-                raise NameError('Missing or infinite labels detected.')
 
     def run(self):
         '''
         Loads data from csvs, executes basic data checks, runs loop.
         '''
         # Run Data checks
-        if self.method = 'pandas':
-            self.X_variables = [col for col in self.train.columns if col != self.label and col not in self.ignore]
-            self.data_checks(self.train)
-            self.data_checks(self.test)
-            X_train = self.train[self.X_variables]
-            y_train = self.train[self.label]
-            X_test = self.test[self.X_variables]
-            y_test = self.test[self.label]
-        if self.method = 'csc':
-            if not isspmatrix_csc(train):
-                train = csc_matrix(train)
-                test = csc_matrix(test)
-            self.X_variables = [col for col in range(self.train.shape[1]) if col != self.label and col not in self.ignore]
-            X_train = self.train[:, self.X_variables]
-            y_train = self.train[:, self.label]
-            X_test = self.test[:, self.X_variables]
-            y_test = self.test[:, self.label]
+        if self.method == 'pandas':
+            self.data_checks(self.X_train)
+            self.data_checks(self.X_test)
 
         # Run the loop
-        self.clf_loop(X_train, X_test, y_train, y_test)
+        self.clf_loop(self.X_train, self.X_test, self.y_train, self.y_test)

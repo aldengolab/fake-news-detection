@@ -2,6 +2,8 @@
 # A class to hold models
 
 import numpy as np
+import scipy.sparse as sps
+import random
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier, OrthogonalMatchingPursuit, RandomizedLogisticRegression
@@ -10,8 +12,6 @@ from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import *
-import random
-import matplotlib.pyplot as plt
 
 class Model():
 
@@ -22,9 +22,9 @@ class Model():
         Constructor.
         '''
         self.clf = clf
-        self.X_train = X_train
+        self.X_train = X_train.todense()
         self.y_train = y_train
-        self.X_test = X_test
+        self.X_test = X_test.todense()
         self.y_test = y_test
         self.params = p
         self.N = N
