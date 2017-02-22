@@ -24,7 +24,7 @@ class ModelLoop():
 
     def __init__(self, X_train, X_test, y_train, y_test, models, iterations, output_dir,
                  thresholds = [], ks = [], ignore_columns=[], method='pandas',
-                 report='simple', pickle=False):
+                 report='simple', pickle=False, roc=False):
         '''
         Constructor for the ModelLoop.
 
@@ -58,6 +58,7 @@ class ModelLoop():
         self.report = report
         assert (report == 'simple' or report == 'full')
         self.pickle = pickle # Not currently supported
+        self.roc = roc
 
     def define_clfs_params(self):
         '''
@@ -91,7 +92,7 @@ class ModelLoop():
             'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']}
             }
 
-    def clf_loop(self, X_train, X_test, y_train, y_test, report = 'simple'):
+    def clf_loop(self, X_train, X_test, y_train, y_test):
         '''
         Runs through each model specified by models_to_run once with each possible
         setting in params.
@@ -103,7 +104,8 @@ class ModelLoop():
             print('Running {}.'.format(self.models_to_run[index]))
             parameter_values = self.params[self.models_to_run[index]]
             grid = ParameterGrid(parameter_values)
-            if iteration < self.iterations_max and iteration <= len(grid):
+            while iteration < self.iterations_max and iteration < len(grid):
+                print('    Running Iteration {} of {}...'.format(iteration + 1, self.iterations_max))
                 if len(grid) > self.iterations_max:
                     p = random.choice(list(grid))
                 else:
@@ -114,7 +116,13 @@ class ModelLoop():
                                    self.output_dir, thresholds = self.thresholds,
                                    ks = self.ks, report = self.report)
                     m.run()
-                    m.performance_to_file()
+                    print('    Printing to file...')
+                    if not self.roc:
+                        m.performance_to_file()
+                    else:
+                        m.performance_to_file(roc='{}ROC_{}_{}-{}.png'.format(
+                            self.output_dir, self.models_to_run[index], N,
+                            iteration))
                     N += 1
                     iteration += 1
                 except IndexError as e:
@@ -135,7 +143,7 @@ class ModelLoop():
 
     def prepare_reports(self):
         '''
-        Perpares the output file(s).
+        Prepares the output file(s).
         '''
         if not os.path.isdir(self.output_dir):
             os.makedirs('{}'.format(self.output_dir))
@@ -179,6 +187,8 @@ class ModelLoop():
     def run(self):
         '''
         Loads data from csvs, executes basic data checks, runs loop.
+
+        If roc is not False, will print ROC to the filename specified.
         '''
         # Run Data checks
         if self.method == 'pandas':
