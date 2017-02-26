@@ -56,6 +56,8 @@ class Model():
         '''
         self.clf.set_params(**self.params)
         f = get_feature_transformer(self.parser)
+        # self.X_train_fts = f.fit_transform(self.X_train)
+        # self.X_test_fts = f.transform(self.X_test)
         self.pipeline = Pipeline([
             ('feature_gen', f),
             ('clf', self.clf),
