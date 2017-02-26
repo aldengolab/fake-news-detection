@@ -18,6 +18,9 @@ from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import ParameterGrid
 from sklearn.metrics import *
+import spacy
+from transform_features import get_feature_transformer
+
 
 from model import Model
 
@@ -38,8 +41,8 @@ class ModelLoop():
          - report: type of reporting, options are simple and full
          - pickle: whether to pickle models
         '''
-        self.X_train = X_train
-        self.X_test = X_test
+        self.raw_X_train = X_train
+        self.raw_X_test = X_test
         self.y_train = y_train
         self.y_test = y_test
         self.models_to_run = models
@@ -180,6 +183,10 @@ class ModelLoop():
         Checks that data are all present and there are no infinite values.
         '''
         if self.method == 'pandas':
+
+            # Feature generation assumes that each article text is unique.
+            assert (self.raw_X_train.duplicated().sum() == 0)
+            assert (self.raw_X_test.duplicated().sum() == 0)
             # Remove any infinities, replace with missing
             dataframe=dataframe.replace([np.inf, -np.inf], np.nan)
             # Find any columns with missing values
@@ -199,8 +206,13 @@ class ModelLoop():
         '''
         # Run Data checks
         if self.method == 'pandas':
-            self.data_checks(self.X_train)
-            self.data_checks(self.X_test)
+            self.data_checks(self.raw_X_train)
+            self.data_checks(self.raw_X_test)
+        # Generate features
+        parser = spacy.load('en')
+        f = get_feature_transformer(parser)
+        self.X_train = f.fit_transform(self.raw_X_train)
+        self.X_test = f.transform(self.raw_X_test)
 
         # Run the loop
         self.clf_loop(self.X_train, self.X_test, self.y_train, self.y_test)

@@ -37,7 +37,7 @@ class GrammarTransformer():
         for i, x in enumerate(texts):
             lookup[x] = i
         grammar_counts = {}
-        for doc in self.parser.pipe(texts, batch_size=1000, n_threads=8):
+        for doc in self.parser.pipe(texts, batch_size=1000, n_threads=4):
             counts = collections.Counter()
             for w in doc:
                 counts[w.dep_] += 1
@@ -83,7 +83,7 @@ class PreTokenizer():
         for i, x in enumerate(texts):
             lookup[x] = i
         token_dict = {}
-        for doc in self.parser.pipe(texts, batch_size=1000, n_threads=8):
+        for doc in self.parser.pipe(texts, batch_size=1000, n_threads=4):
 
             lemmas = []
             # If a token is a named entity, replace it with <NAME>, <PLACE> etc
@@ -93,9 +93,6 @@ class PreTokenizer():
 
                     lemmas.append(tok.text.lower().strip() if tok.ent_type_ == "" else "<{}>".format(tok.ent_type_))
                 except:
-                    print(tok.ent_type_)
-                    print(doc)
-                    print(tok)
                     print("error: {}").format(tok)
                     lemmas.append("<UNK>")
                     continue
@@ -114,16 +111,19 @@ class PreTokenizer():
             while "\n\n" in tokens:
                 tokens.remove("\n\n")
             t = " ".join(tokens) 
-            token_dict[doc.text] = t
+            token_dict[doc.text] = str(t)
         rv = list(range(len(texts)))
         for text, i in lookup.items():
             try:
                 rv[i] = token_dict[text]
-            except:
+            except Exception as e:
                 # Ocassionally the way Spacey processes unusual characters (bullet points, em dashes) will cause the lookup based on the original characters to fail.
                 # In that case, just set to None.
+                print("Tokenize Text error: ", e)
                 rv[i] = "None"
                 continue
+        # rv = [x for x in rv if type(x) == str]
+        # print(rv[:20])
         return rv
 
 
@@ -161,8 +161,6 @@ class CleanTextTransformer():
         
         # replace HTML symbols
         text = text.replace("&amp;", "and").replace("&gt;", ">").replace("&lt;", "<")
-        # for s in SYMBOLS:
-        #     text = text.replace(s, '')
         return text
 
 
@@ -176,12 +174,11 @@ def get_feature_transformer(parser):
     returns:
         feature transformer: FeatureUnion
     '''
-    # tfidf = TFIDFTransformer(parser=parser)
     tfidf = Pipeline([
             ('cln', CleanTextTransformer()),
             ('pre', PreTokenizer(parser=parser)),
             ('vect', TfidfVectorizer(
-                         max_features=3000)),
+                         max_features=3000, decode_error='replace')),
             ('clf', None)
         ])
     grammar_counter = Pipeline([
