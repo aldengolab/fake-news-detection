@@ -4,6 +4,7 @@
 import numpy as np
 import scipy.sparse as sps
 import random
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier, OrthogonalMatchingPursuit, RandomizedLogisticRegression
@@ -13,19 +14,23 @@ from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import *
 import matplotlib.pyplot as plt
+import spacy
+from transform_features import get_feature_transformer
 
 class Model():
 
     def __init__(self, clf, X_train, y_train, X_test, y_test, p, N, model_type,
-                 iteration, output_dir, report='simple',
+                 iteration, output_dir,  parser, report='simple',
                  threshold=0.75, thresholds=[], ks=[], k=.05):
         '''
         Constructor.
         '''
         self.clf = clf
-        self.X_train = X_train.todense()
+        # self.X_train = X_train.todense()
+        self.X_train = X_train
         self.y_train = y_train
-        self.X_test = X_test.todense()
+        self.X_test = X_test
+        # self.X_test = X_test.todense()
         self.y_test = y_test
         self.params = p
         self.N = N
@@ -43,13 +48,19 @@ class Model():
         self.best_features = None
         self.output_dir = output_dir
         self.report = report
+        self.parser = parser
 
     def run(self):
         '''
         Runs a model with params p.
         '''
         self.clf.set_params(**self.params)
-        self.y_pred_probs = self.clf.fit(self.X_train,self.y_train).predict_proba(self.X_test)[:,1]
+        f = get_feature_transformer(self.parser)
+        self.pipeline = Pipeline([
+            ('feature_gen', f),
+            ('clf', self.clf),
+        ])
+        self.y_pred_probs = self.pipeline.fit(self.X_train,self.y_train).predict_proba(self.X_test)[:,1]
         '''
         if self.model_type is 'RF':
             importances = self.clf.feature_importances_
