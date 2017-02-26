@@ -20,7 +20,7 @@ This project is using a [dataset published by Signal Media](http://research.sign
 
 From the raw article text, we generate the following features:
 
-1. Vectorized bigram Term Frequency-Inverse Document Frequency, with preprocessing to strip out named entities (people, places etc.) and replace them with anonymous placeholders (e.g. "Donald Trump" --> "<PERSON>"). We use Spacy for tokenization and entity recognition, and SkLearn for TFIDF vectorization.
+1. Vectorized bigram Term Frequency-Inverse Document Frequency, with preprocessing to strip out named entities (people, places etc.) and replace them with anonymous placeholders (e.g. "Donald Trump" --> "-PERSON-"). We use Spacy for tokenization and entity recognition, and SkLearn for TFIDF vectorization.
 2. Normalized frequency of parsed syntacical dependencies. Again, we use Spacy for parsing and SkLearn for vectorization. Here is an [excellent interactive visualization](https://demos.explosion.ai/displacy/) of Spacy's dependency parser.
 
 ## Pipeline
