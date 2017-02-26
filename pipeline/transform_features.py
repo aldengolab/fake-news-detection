@@ -52,7 +52,7 @@ class GrammarTransformer():
                 # Ocassionally the way Spacey processes unusual characters (bullet points, em dashes) will cause the lookup based on the original characters to fail.
                 # In that case, just set to None.
                 print("error")
-                print(text)
+                # print(text)
                 rv[i] = {}
                 continue
 
