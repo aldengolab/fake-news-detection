@@ -2,6 +2,9 @@ import pandas as pd
 from model_loop import ModelLoop
 from sklearn.model_selection import train_test_split
 import argparse
+import spacy
+from transform_features import get_feature_transformer
+
 
 
 if __name__=='__main__':
@@ -26,8 +29,15 @@ if __name__=='__main__':
     print(args)
 
     df = pd.read_csv(args.filename)
+    # print(df.head())
     X = df[args.x_label]
+    # print(X.head())
     y = df[args.y_label]
+    # print(y.head())
+    parser = spacy.load('en')
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    loop = ModelLoop(X_train, X_test, y_train, y_test, args.models, args.iterations, args.output_dir, thresholds = args.thresholds)
+    f = get_feature_transformer(parser)
+    X_train_fts = f.fit_transform(X_train)
+    X_test_fts = f.transform(X_test)
+    loop = ModelLoop(X_train_fts, X_test_fts, y_train, y_test, args.models, args.iterations, args.output_dir, thresholds = args.thresholds, method=None)
     loop.run()

@@ -84,10 +84,21 @@ class PreTokenizer():
             lookup[x] = i
         token_dict = {}
         for doc in self.parser.pipe(texts, batch_size=1000, n_threads=8):
+
             lemmas = []
             # If a token is a named entity, replace it with <NAME>, <PLACE> etc
             for tok in doc:
-                lemmas.append(tok.text.lower().strip() if tok.ent_type_ == "" else "<{}>".format(tok.ent_type_))
+                # tok = str(tok)
+                try:
+
+                    lemmas.append(tok.text.lower().strip() if tok.ent_type_ == "" else "<{}>".format(tok.ent_type_))
+                except:
+                    print(tok.ent_type_)
+                    print(doc)
+                    print(tok)
+                    print("error: {}").format(tok)
+                    lemmas.append("<UNK>")
+                    continue
             tokens = lemmas
             # stoplist the tokens
             tokens = [tok for tok in tokens if tok not in STOPLIST]

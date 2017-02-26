@@ -14,13 +14,12 @@ from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import *
 import matplotlib.pyplot as plt
-import spacy
 from transform_features import get_feature_transformer
 
 class Model():
 
     def __init__(self, clf, X_train, y_train, X_test, y_test, p, N, model_type,
-                 iteration, output_dir,  parser, report='simple',
+                 iteration, output_dir, report='simple',
                  threshold=0.75, thresholds=[], ks=[], k=.05):
         '''
         Constructor.
@@ -48,18 +47,17 @@ class Model():
         self.best_features = None
         self.output_dir = output_dir
         self.report = report
-        self.parser = parser
 
     def run(self):
         '''
         Runs a model with params p.
         '''
         self.clf.set_params(**self.params)
-        f = get_feature_transformer(self.parser)
+        # f = get_feature_transformer(self.parser)
         # self.X_train_fts = f.fit_transform(self.X_train)
         # self.X_test_fts = f.transform(self.X_test)
         self.pipeline = Pipeline([
-            ('feature_gen', f),
+            # ('feature_gen', f),
             ('clf', self.clf),
         ])
         self.y_pred_probs = self.pipeline.fit(self.X_train,self.y_train).predict_proba(self.X_test)[:,1]

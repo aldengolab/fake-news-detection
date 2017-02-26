@@ -18,14 +18,14 @@ from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import ParameterGrid
 from sklearn.metrics import *
-import spacy
+
 from model import Model
 
 class ModelLoop():
 
     def __init__(self, X_train, X_test, y_train, y_test, models, iterations, output_dir,
                  thresholds = [.1], ks = [], ignore_columns=[], method='pandas',
-                 report='simple', pickle=False, roc=False, parser=spacy.load('en')):
+                 report='simple', pickle=False, roc=False):
         '''
         Constructor for the ModelLoop.
 
@@ -37,7 +37,6 @@ class ModelLoop():
          - output_dir: directory output model performance
          - report: type of reporting, options are simple and full
          - pickle: whether to pickle models
-         - parser: parser to user for text feature analysis
         '''
         self.X_train = X_train
         self.X_test = X_test
@@ -61,7 +60,6 @@ class ModelLoop():
         assert (report == 'simple' or report == 'full')
         self.pickle = pickle # Not currently supported
         self.roc = roc
-        self.parser = parser
 
     def define_clfs_params(self):
         '''
@@ -120,7 +118,7 @@ class ModelLoop():
                 try:
                     m = Model(clf, X_train, y_train, X_test, y_test, p, N,
                                    self.models_to_run[index], iteration,
-                                   self.output_dir, parser = self.parser, thresholds = self.thresholds,
+                                   self.output_dir, thresholds = self.thresholds,
                                    ks = self.ks, report = self.report)
                     m.run()
                     print('    Printing to file...')
@@ -130,7 +128,7 @@ class ModelLoop():
                         m.performance_to_file(roc='{}ROC_{}_{}-{}.png'.format(
                             self.output_dir, self.models_to_run[index], N,
                             iteration))
-                    N += 1
+                    # N += 1
                     # iteration += 1
                 except IndexError as e:
                     print(p)
@@ -147,6 +145,7 @@ class ModelLoop():
                     print(N)
                     print('AttributeError: {}'.format(e))
                     continue
+                N += 1
                 iteration += 1
 
     def prepare_reports(self):
