@@ -71,16 +71,16 @@ class ModelLoop():
         '''
         # These are the classifiers
         self.clfs = {
-            'RF': RandomForestClassifier(n_estimators = 50, n_jobs = -1),
-            'ET': ExtraTreesClassifier(n_estimators = 10, n_jobs = -1, criterion = 'entropy'),
-            'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth = [1, 5, 10, 15]), algorithm = "SAMME", n_estimators = 200),
+            #'RF': RandomForestClassifier(n_estimators = 50, n_jobs = -1),
+            #'ET': ExtraTreesClassifier(n_estimators = 10, n_jobs = -1, criterion = 'entropy'),
+            #'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth = [1, 5, 10, 15]), algorithm = "SAMME", n_estimators = 200),
             'LR': LogisticRegression(penalty = 'l1', C = 1e5),
-            'SVM': svm.SVC(kernel = 'linear', probability = True, random_state = 0),
-            'GB': GradientBoostingClassifier(learning_rate = 0.05, subsample = 0.5, max_depth = 6, n_estimators = 10),
+            #'SVM': svm.SVC(kernel = 'linear', probability = True, random_state = 0),
+            #'GB': GradientBoostingClassifier(learning_rate = 0.05, subsample = 0.5, max_depth = 6, n_estimators = 10),
             'NB': GaussianNB(),
-            'DT': DecisionTreeClassifier(),
-            'SGD': SGDClassifier(loss = 'log', penalty = 'l2'),
-            'KNN': KNeighborsClassifier(n_neighbors = 3)
+            #'DT': DecisionTreeClassifier(),
+            #'SGD': SGDClassifier(loss = 'log', penalty = 'l2'),
+            #'KNN': KNeighborsClassifier(n_neighbors = 3)
             }
         # These are the parameters which will be run through
         self.params = {
@@ -214,8 +214,8 @@ class ModelLoop():
         # Generate features
         parser = spacy.load('en')
         f = get_feature_transformer(parser)
-        self.X_train = f.fit_transform(self.raw_X_train)
-        self.X_test = f.transform(self.raw_X_test)
+        self.X_train = f.fit_transform(self.raw_X_train).todense()
+        self.X_test = f.transform(self.raw_X_test).todense()
 
         # Run the loop
         self.clf_loop(self.X_train, self.X_test, self.y_train, self.y_test)

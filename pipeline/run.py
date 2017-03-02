@@ -23,12 +23,16 @@ if __name__=='__main__':
                     help='Thresholds', default = [0.1, 0.2, 0.5])
     parser.add_argument('--output_dir', type=str,
                     help='Output directory', default = 'output/')
+    parser.add_argument('--dedupe', help="dedupe content column",
+                    action="store_true")
 
 
     args = parser.parse_args()
     print(args)
 
     df = pd.read_csv(args.filename)
+    if args.dedupe:
+        df = df.drop_duplicates(subset='content')
     # print(df.head())
     X = df[args.x_label]
     # print(X.head())

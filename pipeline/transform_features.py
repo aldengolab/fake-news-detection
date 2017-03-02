@@ -48,10 +48,10 @@ class GrammarTransformer():
         for text, i in lookup.items():
             try:
                 rv[i] = grammar_counts[text]
-            except:
+            except Exception as e:
                 # Ocassionally the way Spacey processes unusual characters (bullet points, em dashes) will cause the lookup based on the original characters to fail.
                 # In that case, just set to None.
-                print("error")
+                print("Error in GrammarTransformer, setting to None")
                 # print(text)
                 rv[i] = {}
                 continue
@@ -93,7 +93,7 @@ class PreTokenizer():
 
                     lemmas.append(tok.text.lower().strip() if tok.ent_type_ == "" else "<{}>".format(tok.ent_type_))
                 except:
-                    print("error: {}").format(tok)
+                    print("Error when tokenizing, setting to Unknown")
                     lemmas.append("<UNK>")
                     continue
             tokens = lemmas
@@ -119,7 +119,7 @@ class PreTokenizer():
             except Exception as e:
                 # Ocassionally the way Spacey processes unusual characters (bullet points, em dashes) will cause the lookup based on the original characters to fail.
                 # In that case, just set to None.
-                print("Tokenize Text error: ", e)
+                print("Tokenize Text error, setting to None")
                 rv[i] = "None"
                 continue
         # rv = [x for x in rv if type(x) == str]
