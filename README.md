@@ -32,6 +32,22 @@ The pipeline contains two sets of python code:
 
 We implement these two files differently via shell code depending on end goal. Each implementation will be named with its end goal in mind. 
 
+## Example Pipeline Run
+
+To execute the python with Logistic Regression and Naive Bayes, navigate to the pipeline directory, run:
+```
+python run.py ../articles_deduped.csv --models LR NB
+```
+
+The first argument is the path to the input datafile. The pipeline assumes that the text of each article is unique. If your texts are not unique, use the flag --dedupe to automatically remove duplicated articles during preprocessing. To see a description of all arguments, run:
+
+```
+python run.py --h
+```
+
+A simple report on the models run with basic evaluation metrics will be output to the output/ directory (unless another output directory is specified).
+
+
 ## License
 
 MIT License
