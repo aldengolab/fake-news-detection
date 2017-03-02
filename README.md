@@ -45,6 +45,8 @@ The first argument is the path to the input datafile. The pipeline assumes that 
 python run.py --h
 ```
 
+A simple report on the models run with basic evaluation metrics will be output to the output/ directory (unless another output directory is specified).
+
 
 ## License
 
