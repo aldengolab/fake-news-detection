@@ -34,12 +34,12 @@ We implement these two files differently via shell code depending on end goal. E
 
 ## Example Pipeline Run
 
-From within the pipeline directory, run:
+To execute the python with Logistic Regression and Naive Bayes, navigate to the pipeline directory, run:
 ```
-python run.py ../articles_deduped.csv 
+python run.py ../articles_deduped.csv --models LR NB
 ```
 
-The first argument is the path to the datafile. To see a description of all arguments, run:
+The first argument is the path to the input datafile. To see a description of all arguments, run:
 
 ```
 python run.py --h
