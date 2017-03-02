@@ -83,22 +83,18 @@ class ModelLoop():
             'KNN': KNeighborsClassifier(n_neighbors = 3)
             }
         # These are the parameters which will be run through
-        # self.params = {
-        #     'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [10, 15,20,30,40,50,60,70,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
-        #     'LR': {'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'random_state': [1]},
-        #     'SGD': {'loss': ['log','perceptron'], 'penalty': ['l2','l1','elasticnet'], 'random_state': [1]},
-        #     'ET': {'n_estimators': [1,10,100,1000], 'criterion' : ['gini', 'entropy'], 'max_depth': [1,3,5,10,15], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
-        #     'AB': {'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000], 'random_state': [1]},
-        #     'GB': {'n_estimators': [1,10,100,1000], 'learning_rate' : [0.001,0.01,0.05,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100], 'random_state': [1]},
-        #     'NB': {},
-        #     'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [15,20,30,40,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
-        #     'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear'], 'random_state': [1]},
-        #     'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']}
-        #     }
         self.params = {
-            'DT': {'criterion': ['gini'], 'max_depth': [15]},
-            'LR': {'penalty': ['l2'], 'random_state': [1]},
-        }    
+             'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [10, 15,20,30,40,50,60,70,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
+             'LR': {'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'random_state': [1]},
+             'SGD': {'loss': ['log'], 'penalty': ['l2','l1','elasticnet'], 'random_state': [1]},
+             'ET': {'n_estimators': [1,10,100,1000], 'criterion' : ['gini', 'entropy'], 'max_depth': [1,3,5,10,15], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
+             'AB': {'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000], 'random_state': [1]},
+             'GB': {'n_estimators': [1,10,100,1000], 'learning_rate' : [0.001,0.01,0.05,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100], 'random_state': [1]},
+             'NB': {},
+             'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [15,20,30,40,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'random_state': [1]},
+             'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear'], 'random_state': [1]},
+             'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']}
+             }
 
     def clf_loop(self, X_train, X_test, y_train, y_test):
         '''
@@ -131,8 +127,8 @@ class ModelLoop():
                         m.performance_to_file(roc='{}ROC_{}_{}-{}.png'.format(
                             self.output_dir, self.models_to_run[index], N,
                             iteration))
-                    # N += 1
-                    # iteration += 1
+                    #N += 1
+                    #iteration += 1
                 except IndexError as e:
                     print(p)
                     print(N)
@@ -208,6 +204,13 @@ class ModelLoop():
         if self.method == 'pandas':
             self.data_checks(self.raw_X_train)
             self.data_checks(self.raw_X_test)
+        if self.method == 'csc':
+            if not isspmatrix_csc(self.raw_X_train):
+                self.X_train = csc_matrix(self.raw_X_train)
+                self.X_test = csc_matrix(self.raw_X_test)
+                self.y_test = csc_matrix(self.y_test)
+                self.y_train = csc_matrix(self.y_train)
+
         # Generate features
         parser = spacy.load('en')
         f = get_feature_transformer(parser)
