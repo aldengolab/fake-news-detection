@@ -32,6 +32,19 @@ The pipeline contains two sets of python code:
 
 We implement these two files differently via shell code depending on end goal. Each implementation will be named with its end goal in mind. 
 
+## Example Pipeline Run
+
+From within the pipeline directory, run:
+```
+python run.py ../articles_deduped.csv 
+```
+
+The first argument is the path to the datafile. To see a description of all arguments, run:
+
+```
+python run.py --h
+```
+
 ## License
 
 MIT License
