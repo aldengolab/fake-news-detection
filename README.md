@@ -39,11 +39,12 @@ To execute the python with Logistic Regression and Naive Bayes, navigate to the 
 python run.py ../articles_deduped.csv --models LR NB
 ```
 
-The first argument is the path to the input datafile. To see a description of all arguments, run:
+The first argument is the path to the input datafile. The pipeline assumes that the text of each article is unique. If your texts are not unique, use the flag --dedupe to automatically remove duplicated articles during preprocessing. To see a description of all arguments, run:
 
 ```
 python run.py --h
 ```
+
 
 ## License
 
