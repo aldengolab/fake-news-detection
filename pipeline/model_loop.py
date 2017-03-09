@@ -71,16 +71,16 @@ class ModelLoop():
         '''
         # These are the classifiers
         self.clfs = {
-            #'RF': RandomForestClassifier(n_estimators = 50, n_jobs = -1),
-            #'ET': ExtraTreesClassifier(n_estimators = 10, n_jobs = -1, criterion = 'entropy'),
-            #'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth = [1, 5, 10, 15]), algorithm = "SAMME", n_estimators = 200),
+            'RF': RandomForestClassifier(n_estimators = 50, n_jobs = -1),
+            'ET': ExtraTreesClassifier(n_estimators = 10, n_jobs = -1, criterion = 'entropy'),
+            'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth = [1, 5, 10, 15]), algorithm = "SAMME", n_estimators = 200),
             'LR': LogisticRegression(penalty = 'l1', C = 1e5),
-            #'SVM': svm.SVC(kernel = 'linear', probability = True, random_state = 0),
-            #'GB': GradientBoostingClassifier(learning_rate = 0.05, subsample = 0.5, max_depth = 6, n_estimators = 10),
+            'SVM': svm.SVC(kernel = 'linear', probability = True, random_state = 0),
+            'GB': GradientBoostingClassifier(learning_rate = 0.05, subsample = 0.5, max_depth = 6, n_estimators = 10),
             'NB': GaussianNB(),
-            #'DT': DecisionTreeClassifier(),
-            #'SGD': SGDClassifier(loss = 'log', penalty = 'l2'),
-            #'KNN': KNeighborsClassifier(n_neighbors = 3)
+            'DT': DecisionTreeClassifier(),
+            'SGD': SGDClassifier(loss = 'log', penalty = 'l2'),
+            'KNN': KNeighborsClassifier(n_neighbors = 3)
             }
         # These are the parameters which will be run through
         self.params = {
@@ -154,7 +154,7 @@ class ModelLoop():
         if not os.path.isdir(self.output_dir):
             os.makedirs('{}'.format(self.output_dir))
         if self.report == 'simple':
-            with open(self.output_dir + 'simple_report.csv', 'w') as f:
+            with open(self.output_dir + '/simple_report.csv', 'w') as f:
                 if self.thresholds != []:
                     measure = 'threshold'
                 else:

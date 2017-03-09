@@ -100,7 +100,7 @@ class Model():
             if roc:
                 self.print_roc(self.y_test, self.y_pred_probs, roc)
             if self.report == 'simple':
-                with open(self.output_dir + 'simple_report.csv', 'a') as f:
+                with open(self.output_dir + '/simple_report.csv', 'a') as f:
                     result = '"{}-{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}"\n'.format(
                         self.N, self.iteration, self.model_type, self.iteration,
                         self.roc_auc, measure, self.precision,
