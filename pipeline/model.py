@@ -15,12 +15,15 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import *
 import matplotlib.pyplot as plt
 from transform_features import get_feature_transformer
+import pdb
+import os
+
 
 class Model():
 
     def __init__(self, clf, X_train, y_train, X_test, y_test, p, N, model_type,
-                 iteration, output_dir, report='simple',
-                 threshold=0.75, thresholds=[], ks=[], k=.05):
+                 iteration, output_dir, individuals, setting, label,
+                 report='full', threshold=0.75, thresholds=[], ks=[], k=.05):
         '''
         Constructor.
         '''
@@ -44,9 +47,11 @@ class Model():
         self.precision = None
         self.recall = None
         self.accuracy = None
-        self.best_features = None
         self.output_dir = output_dir
         self.report = report
+        self.uniques = individuals
+        self.setting = setting
+        self.label=label
 
     def run(self):
         '''
@@ -61,14 +66,11 @@ class Model():
             ('clf', self.clf),
         ])
         self.y_pred_probs = self.pipeline.fit(self.X_train,self.y_train).predict_proba(self.X_test)[:,1]
-        '''
-        if self.model_type is 'RF':
-            importances = self.clf.feature_importances_
-            sortedidx = np.argsort(importances)
-            self.best_features = self.X_train.columns[sortedidx]
-        if self.model_type is 'DT':
-            export_graphviz(self.clf, 'DT_graph_' + str(self.N) + '.dot')
-        '''
+        if self.model_type in ['RF', 'ET', 'AB', 'GB', 'DT']:
+            self.importances = self.clf.feature_importances_
+        elif self.model_type in ['SVM', 'LR', 'SGD']:
+            self.importances = self.clf.coef_[0]
+
     def calc_performance(self, threshold):
         '''
         Stores performance given a threshold for prediction.
@@ -84,28 +86,129 @@ class Model():
             self.recall = self.recall_at_k(self.y_test, self.y_pred_probs, self.k)
             self.accuracy = self.accuracy_at_k(self.y_test, self.y_pred_probs, self.k)
 
-    def performance_to_file(self, roc=False):
+    def performance_to_file(self, pickle_path='Not enabled'):
         '''
         Write results to file.
-
-        If roc is not False, will print ROC to the filename specified.
         '''
+        self.pickle_path = pickle_path
         if self.thresholds != []:
             measures = self.thresholds
         elif self.ks != []:
             measures = self.ks
-
         for measure in measures:
             self.calc_performance(measure)
-            if roc:
-                self.print_roc(self.y_test, self.y_pred_probs, roc)
-            if self.report == 'simple':
-                with open(self.output_dir + '/simple_report.csv', 'a') as f:
-                    result = '"{}-{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}"\n'.format(
-                        self.N, self.iteration, self.model_type, self.iteration,
-                        self.roc_auc, measure, self.precision,
-                        self.recall, self.accuracy, self.params)
-                    f.write(result)
+            self.model_performance_to_file(measure=measure)
+        if self.report == 'full':
+            if not os.path.isfile(self.output_dir + '/models.csv'):
+                self.prepare_files()
+            self.model_meta_to_file()
+            if self.iteration == 0:
+                self.model_group_to_file()
+            self.unit_level_to_file()
+            self.feature_importances_to_file()
+
+    def model_meta_to_file(self, filename='/models.csv', method='a'):
+        '''
+        Writes meta information about model, including pickle path, to file.
+
+        COLUMNS
+        model_id,label,model_group_id,model_type,model_parameters,pickle_file_path_name
+        '''
+        with open(self.output_dir + filename, method) as f:
+            result = '"{N}-{iteration}", "{label}", "{N}", "{model_type}", "{params}", "{pickle}"\n'.format(
+                N = self.N, iteration = self.iteration, label=self.label,
+                model_type=self.model_type, params=self.params,
+                pickle=self.pickle_path)
+            f.write(result)
+
+    def model_performance_to_file(self, measure, filename='/evaluations.csv', method='a'):
+        '''
+        Writes standard performance metrics (AUC, precision, etc.) to file.
+
+        COLUMNS:
+        model_id, label, model_type, iteration, auc, measure, precision, recall, accuracy, params
+        '''
+        with open(self.output_dir + filename, method) as f:
+            result = '"{0}-{1}", "{2}", "{3}", "{4}", "{5}", "{6}", "{7}", "{8}", "{9}", "{10}", "{11}"\n'.format(
+                self.N, self.iteration, self.label, self.setting,
+                self.model_type, self.iteration, self.roc_auc, measure,
+                self.precision, self.recall, self.accuracy, self.params)
+            f.write(result)
+
+    def model_group_to_file(self, filename='/model_groups.csv', method='a'):
+        '''
+        Writes model group information to file.
+
+        COLUMNS:
+        model_group_id,model_type,feature_list
+        '''
+        with open(self.output_dir + filename, method) as f:
+            result = '"{0}","{1}","{2}"\n'.format(
+                self.N, self.model_type, self.setting)
+            f.write(result)
+
+    def unit_level_to_file(self, pred_file='/predictions.csv', feat_file='/individual_importances.csv', method='a', date_col='begin_date'):
+        '''
+        Writes unit level reporting to file, namely unit predictions & scores
+        plus feature importances for each unit (x_vector * importance).
+
+        COLUMNS FOR individual_importances:
+        'model_id','article_id
+        COLUMNS FOR predictions:
+        'model_id,article_id,score,predicted_label,actual_label
+        '''
+        i = 0
+        with open(self.output_dir + pred_file, method) as pred_f:
+            with open(self.output_dir + feat_file, method) as import_f:
+                for i in range(len(self.uniques.index)):
+                    unique_id = self.uniques.index[i]
+                    vector = np.array(self.X_test[i])
+                    importances = np.array(self.importances)
+                    if not np.isnan(importances[0]):
+                        indiv_importances = vector * importances
+                    else:
+                        indiv_importances = vector
+                    probability = self.y_pred_probs[i]
+                    label = self.y_test.iloc[i]
+                    pred_result = '"{0}-{1}","{2}","{3}","{4}"'.format(
+                        self.N, self.iteration, unique_id, probability, label)
+                    import_result = '"{0}-{1}","{2}",'.format(self.N,
+                        self.iteration, unique_id)
+                    import_result += ','.join([str(x) for x in list(indiv_importances)])
+                    pred_f.write(pred_result + '\n')
+                    import_f.write(import_result + '\n')
+                    i += 1
+
+    def feature_importances_to_file(self, filename='/feature_importances.csv', method='a'):
+        '''
+        Writes feature importances to file.
+
+        COLUMNS:
+        model_id,feature,feature_importance
+        '''
+        with open(self.output_dir + filename, method) as f:
+            for i in range(self.X_train.shape[1]):
+                feature = i
+                importance = self.importances[i]
+                result = '"{0}-{1}", "{2}", "{3}"\n'.format(self.N,
+                    self.iteration, feature, importance)
+                f.write(result)
+
+    def prepare_files(self):
+        '''
+        Writes columns for full reportin.
+        '''
+        with open(self.output_dir + '/models.csv', 'w') as f:
+            f.write('model_id,run,label,model_group_id,model_type,model_parameters,pickle_file_path\n')
+        with open(self.output_dir + '/model_groups.csv', 'w') as f:
+            f.write('model_group_id,model_type,feature_list\n')
+        with open(self.output_dir + '/predictions.csv', 'w') as f:
+            f.write('model_id,article_id,score,predicted_label,actual_label\n')
+        with open(self.output_dir + '/feature_importances.csv', 'w') as f:
+            f.write('model_id,feature,feature_importance\n')
+        with open(self.output_dir + '/individual_importances.csv', 'w') as f:
+            headers = ['model_id','article_id'] + [str(i) for i in range(self.X_train.shape[1])]
+            f.write(','.join(headers) + '\n')
 
     def auc_roc(self, y_true, y_scores):
         '''

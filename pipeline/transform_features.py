@@ -22,7 +22,7 @@ class GrammarTransformer():
     """
     def __init__(self, parser):
         self.parser = parser
-        
+
     def transform(self, X, y=None,**transform_params):
         return self.countgrammar(X)
 
@@ -31,7 +31,7 @@ class GrammarTransformer():
 
     def get_params(self, deep=True):
         return {}
-    
+
     def countgrammar(self, texts):
         lookup = {}
         for i, x in enumerate(texts):
@@ -110,7 +110,7 @@ class PreTokenizer():
                 tokens.remove("\n")
             while "\n\n" in tokens:
                 tokens.remove("\n\n")
-            t = " ".join(tokens) 
+            t = " ".join(tokens)
             token_dict[doc.text] = str(t)
         rv = list(range(len(texts)))
         for text, i in lookup.items():
@@ -144,13 +144,13 @@ class CleanTextTransformer():
 
     def get_params(self, deep=True):
         return {}
-    
+
     # A custom function to clean the text before sending it into the vectorizer
     def cleanText(self, text):
         # text = text.translate({0x2014: None})
         # get rid of newlines
         text = text.strip().replace("\n", " ").replace("\r", " ")
-        
+
         # replace twitter @mentions
         mentionFinder = re.compile(r"@[a-z0-9_]{1,15}", re.IGNORECASE)
         text = mentionFinder.sub("@MENTION", text)
@@ -158,18 +158,18 @@ class CleanTextTransformer():
         # replace emails @mentions
         emailFinder = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
         text = emailFinder.sub("<EMAIL>", text)
-        
+
         # replace HTML symbols
         text = text.replace("&amp;", "and").replace("&gt;", ">").replace("&lt;", "<")
         return text
 
 
-def get_feature_transformer(parser):
+def get_feature_transformer(parser, run_grammar=True, run_tfidf=True):
     '''
-    Creates a transformer object that will take a text series and generate TFIDF counts and frequency of syntactical structures. 
+    Creates a transformer object that will take a text series and generate TFIDF counts and frequency of syntactical structures.
     Suitable for use as a step in a SKLearn Pipeline.
 
-    inputs: 
+    inputs:
         parser: a Spacy pipeline object
     returns:
         feature transformer: FeatureUnion
@@ -187,5 +187,13 @@ def get_feature_transformer(parser):
             ('to_dict', DictVectorizer()),
             ('clf', None)
         ])
-    feature_transformer = FeatureUnion([("tfidf", tfidf), ('grammar_counter', grammar_counter)])
+    if run_grammar and run_tfidf:
+        print('Running both feature sets.')
+        feature_transformer = FeatureUnion([("tfidf", tfidf), ('grammar_counter', grammar_counter)])
+    elif not run_grammar:
+        print('Running only TFIDF.')
+        feature_transformer = FeatureUnion([("tfidf", tfidf)])
+    elif not run_tfidf:
+        print('Running only PCFGs.')
+        feature_transformer = FeatureUnion([('grammar_counter', grammar_counter)])
     return feature_transformer

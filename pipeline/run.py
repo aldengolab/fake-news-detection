@@ -23,7 +23,8 @@ def pipeline(args):
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     loop = ModelLoop(X_train, X_test, y_train, y_test, args.models,
                      args.iterations, args.output_dir,
-                     thresholds = args.thresholds, ks = args.ks)
+                     thresholds = args.thresholds, ks = args.ks,
+                     setting=args.features[0])
     loop.run()
 
 def restrict_sources(df, column='source', max_size=500, random_state=1):
@@ -68,6 +69,7 @@ if __name__=='__main__':
                     default = [])
     parser.add_argument('--reduce', nargs=1, type=int, help='Restrict sample size from large sources',
                     default = False)
+    parser.add_argument('--features', nargs=1, type=str, help='Restrict features.', default='both_only')
 
     args = parser.parse_args()
     print(args)

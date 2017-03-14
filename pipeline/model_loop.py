@@ -19,6 +19,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import ParameterGrid
 from sklearn.metrics import *
 import spacy
+import traceback
 from transform_features import get_feature_transformer
 
 
@@ -28,7 +29,8 @@ class ModelLoop():
 
     def __init__(self, X_train, X_test, y_train, y_test, models, iterations, output_dir,
                  thresholds = [.1], ks = [], ignore_columns=[], method='pandas',
-                 report='simple', pickle=False, roc=False):
+                 report='full', pickle=False, roc=False, unique_identifiers=['id'],
+                 setting='both_only'):
         '''
         Constructor for the ModelLoop.
 
@@ -63,6 +65,10 @@ class ModelLoop():
         assert (report == 'simple' or report == 'full')
         self.pickle = pickle # Not currently supported
         self.roc = roc
+        self.unique_identifiers = unique_identifiers
+        self.setting = setting
+        if self.setting not in ['both_only', 'all', 'tfidf_only', 'grammar_only']:
+            raise NameError('Incorrect feature setting.')
 
     def define_clfs_params(self):
         '''
@@ -96,13 +102,13 @@ class ModelLoop():
              'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']}
              }
 
-    def clf_loop(self, X_train, X_test, y_train, y_test):
+    def clf_loop(self, X_train, X_test, y_train, y_test, individuals, setting):
         '''
         Runs through each model specified by models_to_run once with each possible
         setting in params.
         '''
         N = 0
-        self.prepare_reports()
+        self.prepare_report()
         for index, clf in enumerate([self.clfs[x] for x in self.models_to_run]):
             iteration = 0
             print('Running {}.'.format(self.models_to_run[index]))
@@ -118,7 +124,8 @@ class ModelLoop():
                     m = Model(clf, X_train, y_train, X_test, y_test, p, N,
                                    self.models_to_run[index], iteration,
                                    self.output_dir, thresholds = self.thresholds,
-                                   ks = self.ks, report = self.report)
+                                   ks = self.ks, report = self.report, label='label',
+                                   individuals=individuals, setting=setting)
                     m.run()
                     print('    Printing to file...')
                     if not self.roc:
@@ -127,52 +134,39 @@ class ModelLoop():
                         m.performance_to_file(roc='{}ROC_{}_{}-{}.png'.format(
                             self.output_dir, self.models_to_run[index], N,
                             iteration))
-                    #N += 1
-                    #iteration += 1
                 except IndexError as e:
                     print(p)
                     print(N)
                     print('IndexError: {}'.format(e))
+                    print(traceback.format_exc())
                     continue
                 except RuntimeError as e:
                     print(p)
                     print(N)
                     print('RuntimeError: {}'.format(e))
+                    print(traceback.format_exc())
                     continue
                 except AttributeError as e:
                     print(p)
                     print(N)
                     print('AttributeError: {}'.format(e))
+                    print(traceback.format_exc())
                     continue
                 N += 1
                 iteration += 1
 
-    def prepare_reports(self):
+    def prepare_report(self):
         '''
         Prepares the output file(s).
         '''
         if not os.path.isdir(self.output_dir):
-            os.makedirs('{}'.format(self.output_dir))
-        if self.report == 'simple':
-            with open(self.output_dir + '/simple_report.csv', 'w') as f:
-                if self.thresholds != []:
-                    measure = 'threshold'
-                else:
-                    measure = 'k'
-                f.write('model_id, model_type, iteration, auc, {}, precision, recall, accuracy, params\n'.format(measure))
-        else:
-            with open(self.output_dir + 'evaluations.csv', 'w') as f:
-                f.write('model_id, metric, parameter, value, comment\n')
-            with open(self.output_dir + 'models.csv', 'w') as f:
-                f.write('model_id, model_group_id, run_time, batch_runtime, model_type, model_parameters, model_comment, batch_comment, config, pickle_file_path_name\n')
-            with open(self.output_dir + 'model_groups.csv', 'w') as f:
-                f.write('model_group_id, model_type, model_parameters prediction_window, feature_list\n')
-            with open(self.output_dir + 'predictions.csv', 'w') as f:
-                f.write('model_id, as_of_date, unit_id, unit_score, label_value, rank_abs, rank_pct\n')
-            with open(self.output_dir + 'feature_importances.csv', 'w') as f:
-                f.write('model_id, feature, feature_importance\n')
-            with open(self.output_dir + 'individual_importances.csv', 'w') as f:
-                f.write('model_id, unit_id\n')
+            os.mkdir(self.output_dir)
+        with open(self.output_dir + '/evaluations.csv', 'w') as f:
+            if self.thresholds != []:
+                measure = 'threshold'
+            else:
+                measure = 'k'
+            f.write('model_id, model_type, iteration, auc, {}, precision, recall, accuracy, params\n'.format(measure))
 
     def data_checks(self, dataframe):
         '''
@@ -211,11 +205,23 @@ class ModelLoop():
                 self.y_test = csc_matrix(self.y_test)
                 self.y_train = csc_matrix(self.y_train)
 
+        individuals = self.y_test
+
         # Generate features
         parser = spacy.load('en')
-        f = get_feature_transformer(parser)
-        self.X_train = f.fit_transform(self.raw_X_train).todense()
-        self.X_test = f.transform(self.raw_X_test).todense()
+        if self.setting == 'all':
+            params = [(True, False, 'no_tfidf'), (True, True, 'both'), (False, True, 'no_grammar')]
+        if self.setting == 'both_only':
+            params = [(True, True, 'both')]
+        if self.setting == 'grammar_only':
+            params = [(True, False, 'no_tfidf')]
+        if self.setting == 'tfidf_only':
+            params = [(False, True, 'no_grammar')]
+        for params in params:
+            print('Feature generation set to {} for this run'.format(params[2]))
+            f = get_feature_transformer(parser, run_grammar=params[0], run_tfidf=params[1])
+            self.X_train = f.fit_transform(self.raw_X_train).todense()
+            self.X_test = f.transform(self.raw_X_test).todense()
 
-        # Run the loop
-        self.clf_loop(self.X_train, self.X_test, self.y_train, self.y_test)
+            # Run the loop
+            self.clf_loop(self.X_train, self.X_test, self.y_train, self.y_test, individuals, params[2])
