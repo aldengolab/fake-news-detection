@@ -39,6 +39,9 @@ class ParallelScraper:
         self.manage_process(process_threads)
         for p in self.collect_pool:
             p.join()
+        if not self.queue.empty():
+            # If there's still articles to process, restart processing
+            self.manage_process(process_threads)
         for p in self.process_pool:
             p.join()
 
