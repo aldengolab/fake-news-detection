@@ -4,6 +4,8 @@ from sklearn.model_selection import train_test_split
 import argparse
 import spacy
 from transform_features import get_feature_transformer
+from collections import defaultdict
+import numpy as np
 
 def pipeline(args):
     '''
@@ -13,7 +15,7 @@ def pipeline(args):
     if args.dedupe:
         df = df.drop_duplicates(subset='content')
     if args.reduce:
-        df = restrict_sources(df, column)
+        df = restrict_sources(df)
     X = df[args.x_label]
     y = df[args.y_label]
     parser = spacy.load('en')
@@ -23,7 +25,7 @@ def pipeline(args):
                      thresholds = args.thresholds, ks = args.ks)
     loop.run()
 
-def restrict_sources(df, column, max_size=500, random_state=1):
+def restrict_sources(df, column='source', max_size=500, random_state=1):
     '''
     Resamples data set such that samples with more than n=500 are re-sampled
     randomly.
