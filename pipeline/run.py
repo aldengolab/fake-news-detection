@@ -12,6 +12,7 @@ def pipeline(args):
     Runs the model loop.
     '''
     df = pd.read_csv(args.filename)
+    df.loc[:,args.x_label] = df[args.x_label].fillna("None")
     if args.dedupe:
         df = df.drop_duplicates(subset='content')
     if args.reduce:
@@ -62,7 +63,7 @@ if __name__=='__main__':
     parser.add_argument('--output_dir', type=str,
                     help='Output directory', default = 'output/')
     parser.add_argument('--dedupe', help="dedupe content column",
-                    action="store_true")
+                    action="store_true", default = True)
     parser.add_argument('--ks', nargs='+', type=float, help='Metrics at k',
                     default = [])
     parser.add_argument('--reduce', nargs=1, type=int, help='Restrict sample size from large sources',
