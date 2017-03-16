@@ -1,7 +1,8 @@
 # fake-news-detection
 Final Project for CAPP 30255 Advanced Machine Learning for Public Policy  
 Lauren Dyson & Alden Golab, Winter 2017  
-_This project is currently in progress_.
+
+You can find the final summary for this project in the main directory.
 
 ## Dependencies
 - python 3.x
@@ -11,6 +12,10 @@ _This project is currently in progress_.
 - scipy
 - pandas
 - spacy
+
+We have included a conda environment yaml. To install, run: 
+
+        conda env create -f environment.yml
 
 ## Data
 
