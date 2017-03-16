@@ -71,17 +71,18 @@ class Model():
         elif self.model_type in ['SVM', 'LR', 'SGD']:
             self.importances = self.clf.coef_[0]
 
-    def calc_performance(self, threshold):
+    def calc_performance(self, measure):
         '''
         Stores performance given a threshold for prediction.
         '''
-        self.threshold = threshold
         self.roc_auc = self.auc_roc(self.y_test, self.y_pred_probs)
         if self.ks == [] and self.thresholds != []:
+            self.threshold = measure
             self.precision = self.precision_at_threshold(self.y_test, self.y_pred_probs, self.threshold)
             self.recall = self.recall_at_threshold(self.y_test, self.y_pred_probs, self.threshold)
             self.accuracy = self.accuracy_at_threshold(self.y_test, self.y_pred_probs, self.threshold)
         elif self.ks != []:
+            self.k = measure
             self.precision = self.precision_at_k(self.y_test, self.y_pred_probs, self.k)
             self.recall = self.recall_at_k(self.y_test, self.y_pred_probs, self.k)
             self.accuracy = self.accuracy_at_k(self.y_test, self.y_pred_probs, self.k)
@@ -159,25 +160,13 @@ class Model():
         '''
         i = 0
         with open(self.output_dir + pred_file, method) as pred_f:
-            with open(self.output_dir + feat_file, method) as import_f:
-                for i in range(len(self.uniques.index)):
-                    unique_id = self.uniques.index[i]
-                    vector = np.array(self.X_test[i])
-                    importances = np.array(self.importances)
-                    if not np.isnan(importances[0]):
-                        indiv_importances = vector * importances
-                    else:
-                        indiv_importances = vector
-                    probability = self.y_pred_probs[i]
-                    label = self.y_test.iloc[i]
-                    pred_result = '"{0}-{1}","{2}","{3}","{4}"'.format(
-                        self.N, self.iteration, unique_id, probability, label)
-                    import_result = '"{0}-{1}","{2}",'.format(self.N,
-                        self.iteration, unique_id)
-                    import_result += ','.join([str(x) for x in list(indiv_importances)])
-                    pred_f.write(pred_result + '\n')
-                    import_f.write(import_result + '\n')
-                    i += 1
+            for i in range(len(self.uniques.index)):
+                unique_id = self.uniques.index[i]
+                probability = self.y_pred_probs[i]
+                label = self.y_test.iloc[i]
+                pred_result = '"{0}-{1}","{2}","{3}","{4}"'.format(
+                    self.N, self.iteration, unique_id, probability, label)
+                pred_f.write(pred_result + '\n')
 
     def feature_importances_to_file(self, filename='/feature_importances.csv', method='a'):
         '''
@@ -199,11 +188,11 @@ class Model():
         Writes columns for full reportin.
         '''
         with open(self.output_dir + '/models.csv', 'w') as f:
-            f.write('model_id,run,label,model_group_id,model_type,model_parameters,pickle_file_path\n')
+            f.write('model_id,label,model_group_id,model_type,model_parameters,pickle_file_path\n')
         with open(self.output_dir + '/model_groups.csv', 'w') as f:
             f.write('model_group_id,model_type,feature_list\n')
         with open(self.output_dir + '/predictions.csv', 'w') as f:
-            f.write('model_id,article_id,score,predicted_label,actual_label\n')
+            f.write('model_id,article_id,score,actual_label\n')
         with open(self.output_dir + '/feature_importances.csv', 'w') as f:
             f.write('model_id,feature,feature_importance\n')
         with open(self.output_dir + '/individual_importances.csv', 'w') as f:

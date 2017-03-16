@@ -60,13 +60,13 @@ if __name__=='__main__':
     parser.add_argument('--iterations', type=int,
                     help='Number of iterations', default = 3)
     parser.add_argument('--thresholds', nargs='+', type=float,
-                    help='Thresholds', default = [0.9, 0.8, 0.75,  0.7, 0.6])
+                    help='Thresholds', default = [])
     parser.add_argument('--output_dir', type=str,
                     help='Output directory', default = 'output/')
     parser.add_argument('--dedupe', help="dedupe content column",
                     action="store_true", default = True)
     parser.add_argument('--ks', nargs='+', type=float, help='Metrics at k',
-                    default = [])
+                    default = [0.01, 0.05, 0.10, 0.15, 0.2])
     parser.add_argument('--reduce', nargs=1, type=int, help='Restrict sample size from large sources',
                     default = False)
     parser.add_argument('--features', nargs=1, type=str, help='Restrict features.', default='both_only')

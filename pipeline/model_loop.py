@@ -152,9 +152,8 @@ class ModelLoop():
                     print('AttributeError: {}'.format(e))
                     print(traceback.format_exc())
                     continue
-                N += 1
                 iteration += 1
-
+            N += 1
     def prepare_report(self):
         '''
         Prepares the output file(s).
