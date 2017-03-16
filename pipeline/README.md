@@ -1,14 +1,18 @@
 # Model learning pipeline
 
-## Sample Run
+This code implements the model pipeline. 
 
-`from model_loop import ModelLoop`
+## Files
 
-`label = 'LABEL'`  
-`models = ['NB', 'RF', 'ET', 'LR', 'SVM']`  
-`iterations = 10`  
-`output_dir = 'output/'`  
-`for test, train in splits:`  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`loop = ModelLoop(train, test, label, models, iterations, output_dir, ignore_columns = ['DATE'])`  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`loop.run()`  
-`pd.read_csv('output/simple_report.csv', quotechar='"', skipinitialspace = True)`
+- `model.py`: a class for models
+- `model_loop.py`: a class for running a loop of classifiers; takes test-train data splits and various run params
+- `run.py`: this code implements the model_loop class; it also implements our re-sampling of the data
+- `run.sh`: this code runs the full model pipeline; it contains the specifications to alter the operation of the code
+
+## To Run
+Make any desired edits to the `run.sh` file and execute the following in bash:
+
+        chmod +x run.sh
+        ./run.sh
+        
+
